@@ -50,13 +50,13 @@ Follow these steps to run the project locally.
 1. Clone the repository:
 
    ```bash
-   git clone YOUR_REPOSITORY_URL
+   git clone 
    ```
 
 2. Open the project folder:
 
    ```bash
-   cd YOUR_REPOSITORY_FOLDER
+   cd 
    ```
 
 3. Open `index.html` in your web browser.
