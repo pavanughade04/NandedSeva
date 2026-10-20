@@ -1,0 +1,236 @@
+
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Find local service providers in Nanded, Maharashtra.">
+  <meta name="theme-color" content="#102a43">
+  <title>NandedSeva | Nanded ki har service, ek jagah</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="script.js" defer></script>
+</head>
+<body>
+  <div class="topbar">
+    <span>📍 Nanded, Maharashtra</span>
+    <span>Local services. Direct contact. Simple.</span>
+  </div>
+
+  <nav class="nav container">
+    <a class="brand" href="#home">📍 Nanded<span>Seva</span></a>
+    <button class="menu-toggle" id="menu-toggle" aria-expanded="false" aria-controls="nav-links">☰ Menu</button>
+    <div class="navlinks" id="nav-links">
+      <a href="#home">Home</a>
+      <a href="#categories">Services</a>
+      <a href="#listings">Listings</a>
+      <a href="#add-listing">Add Business</a>
+      <a href="#reviews">Reviews</a>
+    </div>
+    <button class="btn btn-small" id="admin-open" type="button">Admin</button>
+  </nav>
+
+  <header class="hero" id="home">
+    <div class="container hero-inner">
+      <div class="eyebrow">YOUR CITY, YOUR SERVICES</div>
+      <h1>Nanded ki har service,<br><span>ek jagah.</span></h1>
+      <p>Apne area ke local service providers dhoondho — fast, easy aur direct.</p>
+
+      <form class="searchbox" id="search-form">
+        <input id="query" type="search" placeholder="Kya chahiye? e.g. plumber, tutor" aria-label="Search services">
+        <select id="category-filter" aria-label="Filter by category">
+          <option value="">All categories</option>
+        </select>
+        <select id="area-filter" aria-label="Filter by area">
+          <option value="">All areas</option>
+        </select>
+        <button class="btn" type="submit">Search ↗</button>
+        <button class="btn btn-light" id="reset-filters" type="button">Reset</button>
+      </form>
+
+      <div class="popular">
+        <strong>Popular:</strong>
+        <button class="chip" data-pick="Electrician" type="button">⚡ Electrician</button>
+        <button class="chip" data-pick="Plumber" type="button">🔧 Plumber</button>
+        <button class="chip" data-pick="Tiffin Service" type="button">🍱 Tiffin</button>
+        <button class="chip" data-pick="AC Repair" type="button">❄️ AC Repair</button>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <section class="section" id="categories">
+      <div class="container">
+        <div class="section-head">
+          <span class="eyebrow">FIND YOUR SERVICE</span>
+          <h2>Popular Categories</h2>
+          <p>Choose a service to see matching listings.</p>
+        </div>
+        <div class="categories" id="category-cards"></div>
+      </div>
+    </section>
+
+    <section class="section section-tint" id="listings">
+      <div class="container">
+        <div class="results-top">
+          <div>
+            <span class="eyebrow">LOCAL DIRECTORY</span>
+            <h2>Service Listings</h2>
+            <p id="result-summary">Browse services in Nanded.</p>
+          </div>
+          <span class="tag">LOCAL DIRECTORY</span>
+        </div>
+        <div class="cards" id="provider-cards" aria-live="polite"></div>
+        <p class="note">
+          Demo records are placeholders, not real or verified businesses.
+          Replace them with real providers who have agreed to be listed.
+        </p>
+      </div>
+    </section>
+
+    <section class="section" id="add-listing">
+      <div class="container form-layout">
+        <div>
+          <span class="eyebrow">GROW YOUR BUSINESS</span>
+          <h2>List your business</h2>
+          <p>Submit your details for review. New listings stay pending until an admin approves them.</p>
+          <ul class="benefits">
+            <li>✓ Reach customers in Nanded</li>
+            <li>✓ Add service and area details</li>
+            <li>✓ Direct contact links after approval</li>
+          </ul>
+        </div>
+
+        <form class="panel form-grid" id="listing-form">
+          <label>
+            Business / provider name
+            <input required name="business" maxlength="80" placeholder="Your business name">
+          </label>
+
+          <label>
+            Service category
+            <select required name="service" id="form-category"></select>
+          </label>
+
+          <label>
+            Contact number
+            <input required name="phone" type="tel" inputmode="tel"
+              pattern="[0-9+ ()-]{8,18}" placeholder="e.g. 9876543210">
+          </label>
+
+          <label>
+            WhatsApp number (optional)
+            <input name="whatsapp" type="tel" inputmode="tel"
+              pattern="[0-9+ ()-]{8,18}" placeholder="e.g. 919876543210">
+          </label>
+
+          <label>
+            Area in Nanded
+            <select required name="area" id="form-area"></select>
+          </label>
+
+          <label>
+            Address / landmark
+            <input name="address" maxlength="120" placeholder="Locality or nearby landmark">
+          </label>
+
+          <label class="full">
+            Short description
+            <textarea name="description" rows="3" maxlength="300" placeholder="What services do you offer?"></textarea>
+          </label>
+
+          <label class="check full">
+            <input required type="checkbox" name="permission">
+            I confirm these details are accurate and agree to submit them for review.
+          </label>
+
+          <button class="btn full" type="submit">Submit for approval</button>
+          <p class="form-message full" id="form-message" role="status"></p>
+        </form>
+      </div>
+    </section>
+
+    <section class="section section-tint" id="reviews">
+      <div class="container">
+        <div class="section-head">
+          <span class="eyebrow">COMMUNITY FEEDBACK</span>
+          <h2>Reviews & Ratings</h2>
+          <p>Reviews in this demo are stored in your current browser.</p>
+        </div>
+
+        <div class="review-layout">
+          <form class="panel form-grid" id="review-form">
+            <label class="full">
+              Listing
+              <select required name="provider" id="review-provider"></select>
+            </label>
+
+            <label class="full">
+              Rating
+              <select required name="rating">
+                <option value="">Choose stars</option>
+                <option value="5">★★★★★ — Excellent</option>
+                <option value="4">★★★★ — Good</option>
+                <option value="3">★★★ — Average</option>
+                <option value="2">★★ — Poor</option>
+                <option value="1">★ — Very poor</option>
+              </select>
+            </label>
+
+            <label class="full">
+              Your review
+              <textarea required name="comment" rows="3" maxlength="300" placeholder="Share an honest experience"></textarea>
+            </label>
+
+            <button class="btn full" type="submit">Submit review</button>
+            <p class="form-message full" id="review-message" role="status"></p>
+          </form>
+
+          <div id="review-list" class="review-list"></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="admin-panel" hidden>
+      <div class="container">
+        <div class="results-top">
+          <div>
+            <span class="eyebrow">DEMO CONTROLS</span>
+            <h2>Listing Approval</h2>
+            <p>Review submissions stored in this browser.</p>
+          </div>
+          <button class="btn btn-light" id="admin-close" type="button">Close</button>
+        </div>
+
+        <div class="admin-warning">
+          Demo only: this admin panel has no secure login.
+          Do not use it as a real public admin system.
+        </div>
+
+        <div id="admin-listings" class="admin-list"></div>
+        <button class="btn btn-danger" id="clear-demo-data" type="button">
+          Clear locally saved demo submissions/reviews
+        </button>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <div class="container footer-inner">
+      <div>
+        <a class="brand brand-footer" href="#home">Nanded<span>Seva</span></a>
+        <p>A local-services directory concept for Nanded, Maharashtra.</p>
+      </div>
+      <div>
+        <strong>Trust matters</strong>
+        <p>Only list real businesses with permission. Verify contact details before publishing.</p>
+      </div>
+      <div>
+        <strong>Quick links</strong>
+        <p><a href="#add-listing">Add your business</a> · <a href="#reviews">Reviews</a></p>
+      </div>
+    </div>
+  </footer>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+</body>
+</html>
