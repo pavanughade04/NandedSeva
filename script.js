@@ -1,597 +1,411 @@
 
-(() => {
-  "use strict";
+// ============================================
+// NANDEDSEVA — WEBSITE FUNCTIONALITY
+// ============================================
 
-  const categories = [
-    ["Electrician", "⚡", "Electrical repairs, switches and wiring."],
-    ["Plumber", "🔧", "Leaks, pipes and plumbing repairs."],
-    ["Tiffin Service", "🍱", "Homemade meals and daily tiffin."],
-    ["Home Tuition", "🎓", "School subjects and exam preparation."],
-    ["Mobile Repair", "📱", "Phone diagnostics and repairs."],
-    ["AC Repair", "❄️", "AC servicing and installation."],
-    ["Carpenter", "🪚", "Furniture repairs and woodwork."],
-    ["Painter", "🖌️", "Home painting and touch-ups."],
-    ["Cleaning Service", "🧹", "Home and office cleaning."],
-    ["Computer Repair", "💻", "Computer and laptop troubleshooting."],
-    ["CCTV Installation", "📹", "CCTV setup and maintenance."],
-    ["RO Service", "🚰", "Water purifier installation and service."],
-    ["Bike Repair", "🏍️", "Two-wheeler maintenance."],
-    ["Pest Control", "🐜", "Pest treatment for homes and offices."],
-    ["Gas Stove Repair", "🔥", "Gas stove inspection and repair."],
-    ["Other", "🧰", "Other services in Nanded."]
-  ];
+"use strict";
 
-  const areas = [
-    "Vazirabad", "Shivaji Nagar", "CIDCO", "Taroda", "Itwara",
-    "Bhagya Nagar", "Waghala", "Railway Station Road",
-    "Other Nanded areas"
-  ];
+const $ = (selector) => document.querySelector(selector);
 
-  // These are placeholders, not real businesses.
-  const demoProviders = [
-    {id:"demo-1",name:"Demo Electrician",service:"Electrician",area:"Vazirabad",description:"Sample listing. Replace with a real provider.",phone:"",whatsapp:"",status:"approved",demo:true},
-    {id:"demo-2",name:"Demo Plumbing Service",service:"Plumber",area:"Shivaji Nagar",description:"Sample listing. Replace with a real provider.",phone:"",whatsapp:"",status:"approved",demo:true},
-    {id:"demo-3",name:"Demo Homemade Tiffin",service:"Tiffin Service",area:"CIDCO",description:"Sample listing. Replace with a real provider.",phone:"",whatsapp:"",status:"approved",demo:true},
-    {id:"demo-4",name:"Demo Home Tutor",service:"Home Tuition",area:"Taroda",description:"Sample listing. Replace with a real provider.",phone:"",whatsapp:"",status:"approved",demo:true},
-    {id:"demo-5",name:"Demo Mobile Repair",service:"Mobile Repair",area:"Itwara",description:"Sample listing. Replace with a real provider.",phone:"",whatsapp:"",status:"approved",demo:true},
-    {id:"demo-6",name:"Demo AC Repair",service:"AC Repair",area:"Other Nanded areas",description:"Sample listing. Replace with a real provider.",phone:"",whatsapp:"",status:"approved",demo:true}
-  ];
+const searchForm = $("#searchForm");
+const searchInput = $("#searchInput");
+const listingSearch = $("#listingSearch");
+const categoryFilter = $("#categoryFilter");
+const areaFilter = $("#areaFilter");
+const resetFilters = $("#resetFilters");
+const resultsCount = $("#resultsCount");
+const businessGrid = $("#businessGrid");
+const themeToggle = $("#themeToggle");
+const categoryGrid = $("#categoryGrid");
+const showAllCategories = $("#showAllCategories");
+const businessForm = $("#businessForm");
+const formMessage = $("#formMessage");
 
-  const $ = selector => document.querySelector(selector);
-  const cards = $("#provider-cards");
-  const query = $("#query");
-  const categoryFilter = $("#category-filter");
-  const areaFilter = $("#area-filter");
-  const toast = $("#toast");
+// Add verified business entries here when you have real details.
+// Do not publish unverified names, phone numbers or addresses.
+const businesses = [];
 
-  const STORAGE = {
-    listings: "nandedseva-listings-v1",
-    reviews: "nandedseva-reviews-v1"
+// Demo submissions are stored locally as pending entries.
+// They are not automatically added to the public directory.
+const PENDING_KEY = "nandedseva_pending_submissions";
+const THEME_KEY = "nandedseva_theme";
+
+const categoryIcons = {
+  "Home Services": "🏠",
+  "Electrical": "⚡",
+  "Plumbing": "🔧",
+  "Education": "📚",
+  "Food Services": "🍱",
+  "Repairs": "🛠️",
+  "Cleaning": "🧹",
+  "Other": "✨"
+};
+
+const normalize = (value) =>
+  String(value ?? "").trim().toLocaleLowerCase("en-IN");
+
+function escapeHTML(value) {
+  return String(value ?? "").replace(/[&<>"']/g, (char) => ({
+    "&": "&amp;",
+    "<": "&lt;",
+    ">": "&gt;",
+    '"': "&quot;",
+    "'": "&#39;"
+  })[char]);
+}
+
+function getBusinessText(business) {
+  return normalize([
+    business.name,
+    business.category,
+    business.area,
+    business.description
+  ].join(" "));
+}
+
+function getFilteredBusinesses() {
+  const query = normalize(listingSearch.value);
+  const category = categoryFilter.value;
+  const area = normalize(areaFilter.value);
+
+  return businesses.filter((business) => {
+    const matchesQuery =
+      !query || getBusinessText(business).includes(query);
+
+    const matchesCategory =
+      !category || business.category === category;
+
+    const matchesArea =
+      !area || normalize(business.area) === area;
+
+    return matchesQuery && matchesCategory && matchesArea;
+  });
+}
+
+function updateAreaOptions() {
+  const previousValue = areaFilter.value;
+
+  const areas = [...new Set(
+    businesses
+      .map((business) => String(business.area ?? "").trim())
+      .filter(Boolean)
+  )].sort((a, b) => a.localeCompare(b, "en-IN"));
+
+  areaFilter.replaceChildren();
+
+  const allOption = document.createElement("option");
+  allOption.value = "";
+  allOption.textContent = "All areas";
+  areaFilter.append(allOption);
+
+  areas.forEach((area) => {
+    const option = document.createElement("option");
+    option.value = area;
+    option.textContent = area;
+    areaFilter.append(option);
+  });
+
+  if (areas.includes(previousValue)) {
+    areaFilter.value = previousValue;
+  }
+}
+
+function makeBusinessCard(business, index) {
+  const name = escapeHTML(business.name);
+  const category = escapeHTML(business.category);
+  const area = escapeHTML(business.area);
+  const description = escapeHTML(business.description);
+  const icon = categoryIcons[business.category] || "📍";
+
+  const phone = String(business.phone ?? "").replace(/[^\d+]/g, "");
+  const phoneDigits = phone.replace(/\D/g, "");
+
+  // Only display contact links when real details are supplied.
+  const callLink = phoneDigits
+    ? `<a class="call-action" href="tel:${escapeHTML(phone)}">☎ Call</a>`
+    : "";
+
+  const rawWhatsApp = String(business.whatsapp || business.phone || "");
+  const whatsappDigits = rawWhatsApp.replace(/\D/g, "");
+  const whatsappLink = whatsappDigits
+    ? `<a href="https://wa.me/${encodeURIComponent(whatsappDigits)}"
+        target="_blank" rel="noopener noreferrer">WhatsApp ↗</a>`
+    : "";
+
+  const mapQuery = [business.name, business.area, "Nanded", "Maharashtra"]
+    .filter(Boolean)
+    .join(", ");
+
+  const mapLink = business.area
+    ? `<a href="https://www.google.com/maps/search/?api=1&amp;query=${encodeURIComponent(mapQuery)}"
+        target="_blank" rel="noopener noreferrer">View map ↗</a>`
+    : "";
+
+  return `
+    <article class="business-card" style="animation-delay:${Math.min(index, 8) * 45}ms">
+      <div class="business-card-top">
+        <div class="business-avatar" aria-hidden="true">${icon}</div>
+        <div>
+          <h3>${name}</h3>
+          <span class="business-category">${category}</span>
+        </div>
+      </div>
+      <p class="business-description">${description}</p>
+      <div class="business-meta">
+        ${area ? `<span>📍 ${area}, Nanded</span>` : ""}
+      </div>
+      <div class="business-actions">
+        ${callLink}
+        ${whatsappLink}
+        ${mapLink}
+      </div>
+    </article>
+  `;
+}
+
+function renderBusinesses() {
+  const filtered = getFilteredBusinesses();
+
+  resultsCount.textContent =
+    `${filtered.length} ${filtered.length === 1 ? "service" : "services"} found`;
+
+  if (filtered.length === 0) {
+    const hasFilters = Boolean(
+      listingSearch.value.trim() ||
+      categoryFilter.value ||
+      areaFilter.value
+    );
+
+    businessGrid.innerHTML = `
+      <div class="empty-state">
+        <div class="empty-state-icon" aria-hidden="true">
+          ${hasFilters ? "🔎" : "🏡"}
+        </div>
+        <h3>${hasFilters ? "No matching services found" : "Local listings are coming soon"}</h3>
+        <p>${
+          hasFilters
+            ? "Try another search, select a different category, or reset your filters."
+            : "There are no published business listings yet. Know a local provider? Submit their details below."
+        }</p>
+        ${
+          hasFilters
+            ? '<button class="button button-outline" id="emptyReset" type="button">Reset filters</button>'
+            : '<a class="button button-primary" href="#add-business">Add a business →</a>'
+        }
+      </div>
+    `;
+
+    const emptyReset = $("#emptyReset");
+    if (emptyReset) emptyReset.addEventListener("click", clearFilters);
+    return;
+  }
+
+  businessGrid.innerHTML = filtered
+    .map((business, index) => makeBusinessCard(business, index))
+    .join("");
+}
+
+function syncSearchFields(value) {
+  searchInput.value = value;
+  listingSearch.value = value;
+}
+
+function clearFilters() {
+  syncSearchFields("");
+  categoryFilter.value = "";
+  areaFilter.value = "";
+
+  categoryGrid.querySelectorAll(".category-card").forEach((card) => {
+    card.classList.remove("active");
+    card.setAttribute("aria-pressed", "false");
+  });
+
+  renderBusinesses();
+}
+
+function selectCategory(category) {
+  categoryFilter.value =
+    categoryFilter.value === category ? "" : category;
+
+  categoryGrid.querySelectorAll(".category-card").forEach((card) => {
+    const active = card.dataset.category === categoryFilter.value;
+    card.classList.toggle("active", active);
+    card.setAttribute("aria-pressed", String(active));
+  });
+
+  renderBusinesses();
+
+  $("#businesses").scrollIntoView({
+    behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches
+      ? "auto"
+      : "smooth",
+    block: "start"
+  });
+}
+
+// Search form in the hero
+searchForm.addEventListener("submit", (event) => {
+  event.preventDefault();
+  syncSearchFields(searchInput.value);
+  renderBusinesses();
+
+  $("#businesses").scrollIntoView({
+    behavior: "smooth",
+    block: "start"
+  });
+});
+
+// Keep the two search inputs synchronized.
+searchInput.addEventListener("input", () => {
+  listingSearch.value = searchInput.value;
+});
+
+listingSearch.addEventListener("input", () => {
+  searchInput.value = listingSearch.value;
+  renderBusinesses();
+});
+
+// Live filters
+categoryFilter.addEventListener("change", () => {
+  categoryGrid.querySelectorAll(".category-card").forEach((card) => {
+    const active = card.dataset.category === categoryFilter.value;
+    card.classList.toggle("active", active);
+    card.setAttribute("aria-pressed", String(active));
+  });
+
+  renderBusinesses();
+});
+
+areaFilter.addEventListener("change", renderBusinesses);
+
+resetFilters.addEventListener("click", clearFilters);
+
+categoryGrid.querySelectorAll(".category-card").forEach((card) => {
+  card.setAttribute("aria-pressed", "false");
+
+  card.addEventListener("click", () => {
+    selectCategory(card.dataset.category);
+  });
+});
+
+showAllCategories.addEventListener("click", () => {
+  clearFilters();
+  $("#categories").scrollIntoView({
+    behavior: "smooth",
+    block: "start"
+  });
+});
+
+// Light / dark theme
+function applyTheme(theme) {
+  const dark = theme === "dark";
+
+  document.documentElement.dataset.theme = dark ? "dark" : "light";
+  themeToggle.textContent = dark ? "☀️" : "🌙";
+  themeToggle.setAttribute(
+    "aria-label",
+    dark ? "Switch to light theme" : "Switch to dark theme"
+  );
+  themeToggle.title = dark ? "Switch to light theme" : "Switch to dark theme";
+
+  const themeColor = document.querySelector('meta[name="theme-color"]');
+  if (themeColor) {
+    themeColor.content = dark ? "#111913" : "#f8faf4";
+  }
+}
+
+function loadTheme() {
+  try {
+    const saved = localStorage.getItem(THEME_KEY);
+    if (saved === "light" || saved === "dark") {
+      return saved;
+    }
+  } catch (error) {
+    // Storage may be unavailable; use the default theme.
+  }
+
+  return window.matchMedia("(prefers-color-scheme: dark)").matches
+    ? "dark"
+    : "light";
+}
+
+applyTheme(loadTheme());
+
+themeToggle.addEventListener("click", () => {
+  const nextTheme =
+    document.documentElement.dataset.theme === "dark" ? "light" : "dark";
+
+  applyTheme(nextTheme);
+
+  try {
+    localStorage.setItem(THEME_KEY, nextTheme);
+  } catch (error) {
+    // Theme still works for the current page.
+  }
+});
+
+// Business submission form
+function readPendingSubmissions() {
+  try {
+    const saved = localStorage.getItem(PENDING_KEY);
+    const parsed = saved ? JSON.parse(saved) : [];
+    return Array.isArray(parsed) ? parsed : [];
+  } catch (error) {
+    return [];
+  }
+}
+
+businessForm.addEventListener("submit", (event) => {
+  event.preventDefault();
+  formMessage.textContent = "";
+
+  if (!businessForm.reportValidity()) return;
+
+  const data = new FormData(businessForm);
+
+  const submission = {
+    id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+    name: String(data.get("businessName") || "").trim(),
+    owner: String(data.get("ownerName") || "").trim(),
+    category: String(data.get("category") || "").trim(),
+    area: String(data.get("area") || "").trim(),
+    phone: String(data.get("phone") || "").trim(),
+    description: String(data.get("description") || "").trim(),
+    whatsapp: String(data.get("whatsapp") || "").trim(),
+    status: "pending",
+    submittedAt: new Date().toISOString()
   };
 
-  function readStore(key) {
-    try {
-      const value = JSON.parse(localStorage.getItem(key) || "[]");
-      return Array.isArray(value) ? value : [];
-    } catch {
-      return [];
-    }
+  if (
+    !submission.name ||
+    !submission.owner ||
+    !submission.category ||
+    !submission.area ||
+    !submission.phone ||
+    !submission.description
+  ) {
+    formMessage.textContent = "Please complete all required fields.";
+    return;
   }
 
-  function writeStore(key, value) {
-    try {
-      localStorage.setItem(key, JSON.stringify(value));
-      return true;
-    } catch {
-      notify("Browser storage unavailable. Data was not saved.");
-      return false;
-    }
+  try {
+    const pending = readPendingSubmissions();
+    pending.push(submission);
+    localStorage.setItem(PENDING_KEY, JSON.stringify(pending));
+
+    businessForm.reset();
+    formMessage.textContent =
+      "Saved in this browser as a pending demo submission. It has not been sent or published.";
+  } catch (error) {
+    formMessage.textContent =
+      "Could not save this submission in browser storage. Please try again.";
   }
-
-  let submissions = readStore(STORAGE.listings);
-  let reviews = readStore(STORAGE.reviews);
-
-  function notify(message) {
-    toast.textContent = message;
-    toast.classList.add("show");
-    clearTimeout(notify.timer);
-    notify.timer = setTimeout(() => toast.classList.remove("show"), 3000);
-  }
-
-  function escapeHTML(value) {
-    return String(value ?? "").replace(/[&<>"']/g, char => ({
-      "&": "&amp;",
-      "<": "&lt;",
-      ">": "&gt;",
-      '"': "&quot;",
-      "'": "&#39;"
-    })[char]);
-  }
-
-  function fillSelect(select, values, label) {
-    select.replaceChildren();
-
-    const first = document.createElement("option");
-    first.value = "";
-    first.textContent = label;
-    select.append(first);
-
-    values.forEach(value => {
-      const option = document.createElement("option");
-      option.value = value;
-      option.textContent = value;
-      select.append(option);
-    });
-  }
-
-  fillSelect(
-    categoryFilter,
-    categories.filter(item => item[0] !== "Other").map(item => item[0]),
-    "All categories"
-  );
-
-  fillSelect($("#form-category"), categories.map(item => item[0]), "Select a service");
-  fillSelect(areaFilter, areas, "All areas");
-  fillSelect($("#form-area"), areas, "Select your area");
-
-  // Build category cards.
-  $("#category-cards").innerHTML = categories
-    .filter(item => item[0] !== "Other")
-    .map(([name, icon, description]) => `
-      <article class="category">
-        <div class="cat-icon">${icon}</div>
-        <h3>${escapeHTML(name)}</h3>
-        <p>${escapeHTML(description)}</p>
-        <button class="btn btn-light" type="button" data-pick="${escapeHTML(name)}">
-          View listings →
-        </button>
-      </article>
-    `).join("");
-
-  function allProviders() {
-    return [
-      ...demoProviders,
-      ...submissions.filter(item => item.status === "approved")
-    ];
-  }
-
-  function getRating(providerId) {
-    const matching = reviews.filter(review => review.providerId === providerId);
-    if (!matching.length) return null;
-
-    const average = matching.reduce(
-      (sum, review) => sum + Number(review.rating), 0
-    ) / matching.length;
-
-    return { average, count: matching.length };
-  }
-
-  function createLink(label, href, className, unavailableMessage) {
-    const link = document.createElement("a");
-    link.className = className;
-    link.textContent = label;
-
-    if (href) {
-      link.href = href;
-
-      if (href.startsWith("https://")) {
-        link.target = "_blank";
-        link.rel = "noopener noreferrer";
-      }
-    } else {
-      link.href = "#";
-      link.setAttribute("aria-disabled", "true");
-
-      link.addEventListener("click", event => {
-        event.preventDefault();
-        notify(unavailableMessage);
-      });
-    }
-
-    return link;
-  }
-
-  function phoneHref(phone) {
-    return "tel:" + String(phone).replace(/[^\d+]/g, "");
-  }
-
-  function whatsappHref(phone) {
-    let number = String(phone || "").replace(/\D/g, "");
-
-    // Indian 10-digit mobile number.
-    if (number.length === 10) number = "91" + number;
-
-    if (number.length < 11 || number.length > 15) return "";
-    return "https://wa.me/" + number;
-  }
-
-  function render() {
-    const searchText = query.value.trim().toLowerCase();
-    const selectedCategory = categoryFilter.value;
-    const selectedArea = areaFilter.value;
-
-    const results = allProviders().filter(provider => {
-      const searchable = [
-        provider.name,
-        provider.service,
-        provider.area,
-        provider.description,
-        provider.address
-      ].join(" ").toLowerCase();
-
-      return (!searchText || searchable.includes(searchText)) &&
-        (!selectedCategory || provider.service === selectedCategory) &&
-        (!selectedArea || provider.area === selectedArea);
-    });
-
-    cards.replaceChildren();
-
-    $("#result-summary").textContent =
-      `${results.length} listing${results.length === 1 ? "" : "s"} found.`;
-
-    if (!results.length) {
-      const empty = document.createElement("div");
-      empty.className = "empty";
-      empty.textContent = "No matching listings yet. Try another category or area.";
-      cards.append(empty);
-      return;
-    }
-
-    const fragment = document.createDocumentFragment();
-
-    results.forEach(provider => {
-      const card = document.createElement("article");
-      card.className = "provider";
-
-      const head = document.createElement("div");
-      head.className = "provider-head";
-
-      const icon = document.createElement("div");
-      icon.className = "provider-icon";
-      icon.textContent =
-        (categories.find(item => item[0] === provider.service) || ["", "🧰"])[1];
-
-      const titleWrap = document.createElement("div");
-      const title = document.createElement("h3");
-      title.textContent = provider.name;
-
-      const badge = document.createElement("span");
-      badge.className = "tag";
-      badge.textContent = provider.demo ? "Demo listing" : "Approved listing";
-
-      titleWrap.append(title, badge);
-      head.append(icon, titleWrap);
-      card.append(head);
-
-      const service = document.createElement("p");
-      service.className = "meta";
-      service.textContent = "🛠 " + provider.service;
-
-      const location = document.createElement("p");
-      location.className = "meta";
-      location.textContent = "📍 " + provider.area + ", Nanded";
-
-      const description = document.createElement("p");
-      description.className = "description";
-      description.textContent = provider.description || "Contact provider for details.";
-
-      card.append(service, location, description);
-
-      if (provider.address) {
-        const address = document.createElement("p");
-        address.className = "meta";
-        address.textContent = "⌖ " + provider.address;
-        card.append(address);
-      }
-
-      const rating = getRating(provider.id);
-      const ratingLine = document.createElement("p");
-      ratingLine.className = "rating-line";
-      ratingLine.textContent = rating
-        ? `★ ${rating.average.toFixed(1)} (${rating.count} review${rating.count === 1 ? "" : "s"})`
-        : "No reviews yet";
-
-      card.append(ratingLine);
-
-      const actions = document.createElement("div");
-      actions.className = "provider-actions";
-
-      actions.append(createLink(
-        "☎ Call",
-        provider.phone ? phoneHref(provider.phone) : "",
-        "btn",
-        "This listing has no phone number."
-      ));
-
-      actions.append(createLink(
-        "WhatsApp ↗",
-        provider.whatsapp ? whatsappHref(provider.whatsapp) : "",
-        "btn btn-whatsapp",
-        "This listing has no valid WhatsApp number."
-      ));
-
-      const mapQuery = encodeURIComponent(
-        [provider.address, provider.area, "Nanded Maharashtra"]
-          .filter(Boolean).join(", ")
-      );
-
-      actions.append(createLink(
-        "⌖ Map",
-        "https://www.google.com/maps/search/?api=1&query=" + mapQuery,
-        "btn btn-light"
-      ));
-
-      card.append(actions);
-      fragment.append(card);
-    });
-
-    cards.append(fragment);
-  }
-
-  function renderReviewOptions() {
-    const select = $("#review-provider");
-    select.replaceChildren();
-
-    const first = document.createElement("option");
-    first.value = "";
-    first.textContent = "Choose a listing";
-    select.append(first);
-
-    allProviders().forEach(provider => {
-      const option = document.createElement("option");
-      option.value = provider.id;
-      option.textContent = `${provider.name} — ${provider.service}`;
-      select.append(option);
-    });
-  }
-
-  function renderReviews() {
-    const list = $("#review-list");
-    list.replaceChildren();
-
-    if (!reviews.length) {
-      const empty = document.createElement("div");
-      empty.className = "empty";
-      empty.textContent = "No reviews submitted yet.";
-      list.append(empty);
-      return;
-    }
-
-    reviews.slice().reverse().slice(0, 12).forEach(review => {
-      const provider = allProviders().find(
-        item => item.id === review.providerId
-      );
-
-      const card = document.createElement("article");
-      card.className = "review-card";
-
-      const stars = document.createElement("div");
-      stars.className = "stars";
-      stars.textContent =
-        "★".repeat(Number(review.rating)) +
-        "☆".repeat(5 - Number(review.rating));
-
-      const name = document.createElement("strong");
-      name.textContent = provider ? provider.name : "Listing";
-
-      const comment = document.createElement("p");
-      comment.textContent = review.comment;
-
-      const date = document.createElement("small");
-      date.textContent = "Browser demo review · " +
-        new Date(review.createdAt).toLocaleDateString();
-
-      card.append(stars, name, comment, date);
-      list.append(card);
-    });
-  }
-
-  function renderAdmin() {
-    const target = $("#admin-listings");
-    target.replaceChildren();
-
-    const pending = submissions.filter(item => item.status === "pending");
-
-    if (!pending.length) {
-      const empty = document.createElement("div");
-      empty.className = "empty";
-      empty.textContent = "No pending submissions.";
-      target.append(empty);
-      return;
-    }
-
-    pending.forEach(provider => {
-      const item = document.createElement("article");
-      item.className = "admin-item";
-
-      const info = document.createElement("div");
-
-      const name = document.createElement("strong");
-      name.textContent = provider.name;
-
-      const details = document.createElement("p");
-      details.textContent = `${provider.service} · ${provider.area}`;
-
-      const phone = document.createElement("p");
-      phone.textContent = provider.phone;
-
-      const description = document.createElement("p");
-      description.textContent = provider.description || "";
-
-      info.append(name, details, phone, description);
-
-      const actions = document.createElement("div");
-      actions.className = "admin-actions";
-
-      const approve = document.createElement("button");
-      approve.type = "button";
-      approve.className = "btn";
-      approve.textContent = "Approve";
-      approve.dataset.approve = provider.id;
-
-      const reject = document.createElement("button");
-      reject.type = "button";
-      reject.className = "btn btn-danger";
-      reject.textContent = "Reject";
-      reject.dataset.reject = provider.id;
-
-      actions.append(approve, reject);
-      item.append(info, actions);
-      target.append(item);
-    });
-  }
-
-  $("#search-form").addEventListener("submit", event => {
-    event.preventDefault();
-    render();
-    $("#listings").scrollIntoView({ behavior: "smooth" });
-  });
-
-  $("#reset-filters").addEventListener("click", () => {
-    query.value = "";
-    categoryFilter.value = "";
-    areaFilter.value = "";
-    render();
-  });
-
-  // Category buttons and admin approval actions.
-  document.addEventListener("click", event => {
-    const pick = event.target.closest("[data-pick]");
-
-    if (pick) {
-      categoryFilter.value = pick.dataset.pick;
-      query.value = "";
-      render();
-      $("#listings").scrollIntoView({ behavior: "smooth" });
-    }
-
-    const approve = event.target.closest("[data-approve]");
-
-    if (approve) {
-      submissions = submissions.map(provider =>
-        provider.id === approve.dataset.approve
-          ? { ...provider, status: "approved" }
-          : provider
-      );
-
-      if (writeStore(STORAGE.listings, submissions)) {
-        render();
-        renderAdmin();
-        renderReviewOptions();
-        notify("Listing approved in this browser demo.");
-      }
-    }
-
-    const reject = event.target.closest("[data-reject]");
-
-    if (reject) {
-      submissions = submissions.filter(
-        provider => provider.id !== reject.dataset.reject
-      );
-
-      if (writeStore(STORAGE.listings, submissions)) {
-        renderAdmin();
-        renderReviewOptions();
-        notify("Submission removed from this browser demo.");
-      }
-    }
-  });
-
-  // Business submissions remain pending until approved.
-  $("#listing-form").addEventListener("submit", event => {
-    event.preventDefault();
-
-    const data = new FormData(event.currentTarget);
-
-    const item = {
-      id: "listing-" + Date.now(),
-      name: String(data.get("business") || "").trim(),
-      service: String(data.get("service") || ""),
-      phone: String(data.get("phone") || "").trim(),
-      whatsapp: String(data.get("whatsapp") || "").trim(),
-      area: String(data.get("area") || ""),
-      address: String(data.get("address") || "").trim(),
-      description: String(data.get("description") || "").trim(),
-      status: "pending",
-      demo: false,
-      createdAt: new Date().toISOString()
-    };
-
-    submissions.push(item);
-
-    if (writeStore(STORAGE.listings, submissions)) {
-      event.currentTarget.reset();
-      $("#form-message").textContent =
-        "Saved as pending in this browser. Admin can review it on this device/browser.";
-      renderAdmin();
-      notify("Business submitted for approval.");
-    }
-  });
-
-  // Browser-demo reviews. These are not independently verified.
-  $("#review-form").addEventListener("submit", event => {
-    event.preventDefault();
-
-    const data = new FormData(event.currentTarget);
-    const comment = String(data.get("comment") || "").trim();
-    const providerId = String(data.get("provider") || "");
-    const rating = Number(data.get("rating"));
-
-    if (!providerId || !comment || rating < 1 || rating > 5) {
-      notify("Please select a listing and valid rating.");
-      return;
-    }
-
-    reviews.push({
-      id: "review-" + Date.now(),
-      providerId,
-      rating,
-      comment,
-      createdAt: new Date().toISOString()
-    });
-
-    if (writeStore(STORAGE.reviews, reviews)) {
-      event.currentTarget.reset();
-      $("#review-message").textContent =
-        "Review saved in this browser demo.";
-      renderReviews();
-      render();
-      notify("Review saved.");
-    }
-  });
-
-  $("#admin-open").addEventListener("click", () => {
-    $("#admin-panel").hidden = false;
-    renderAdmin();
-    $("#admin-panel").scrollIntoView({ behavior: "smooth" });
-  });
-
-  $("#admin-close").addEventListener("click", () => {
-    $("#admin-panel").hidden = true;
-  });
-
-  $("#clear-demo-data").addEventListener("click", () => {
-    if (!confirm("Clear saved submissions and reviews in this browser?")) return;
-
-    const oldSubmissions = submissions;
-    const oldReviews = reviews;
-
-    submissions = [];
-    reviews = [];
-
-    const listingsSaved = writeStore(STORAGE.listings, submissions);
-    const reviewsSaved = writeStore(STORAGE.reviews, reviews);
-
-    if (!listingsSaved || !reviewsSaved) {
-      submissions = oldSubmissions;
-      reviews = oldReviews;
-      return;
-    }
-
-    render();
-    renderAdmin();
-    renderReviews();
-    renderReviewOptions();
-    notify("Local demo submissions and reviews cleared.");
-  });
-
-  $("#menu-toggle").addEventListener("click", () => {
-    const button = $("#menu-toggle");
-    const open = button.getAttribute("aria-expanded") === "true";
-
-    button.setAttribute("aria-expanded", String(!open));
-    $("#nav-links").classList.toggle("open", !open);
-  });
-
-  $("#nav-links").addEventListener("click", event => {
-    if (event.target.closest("a")) {
-      $("#nav-links").classList.remove("open");
-      $("#menu-toggle").setAttribute("aria-expanded", "false");
-    }
-  });
-
-  render();
-  renderReviewOptions();
-  renderReviews();
-  renderAdmin();
-})();
+});
+
+// Footer year
+$("#currentYear").textContent = new Date().getFullYear();
+
+// Initialise the directory.
+// No fabricated business entries are added.
+updateAreaOptions();
+renderBusinesses();
