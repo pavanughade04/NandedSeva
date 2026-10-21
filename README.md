@@ -1,18 +1,32 @@
-# NandedSeva — Local Services Directory
+# 🌿 NandedSeva — Local Services Directory
 
-NandedSeva is a web-based local services directory project designed to help people discover local businesses and service providers in Nanded, Maharashtra.
+### Discover Local Businesses & Services in Nanded, Maharashtra 🇮🇳
 
-## About the Project
+NandedSeva is a frontend-based local services directory website designed to help people discover businesses, explore services, and find useful information about Nanded city.
 
-The goal of NandedSeva is to make it easier for people to find local services through a simple, accessible and user-friendly website.
+## ✨ Features
 
-## Technologies Used
+- 🔍 **Smart Search** — Search for businesses and local services.
+- 📂 **Service Categories** — Explore different types of local businesses.
+- 📍 **Area Filters** — Filter listings by available Nanded localities.
+- 📞 **Call Businesses** — Contact listed businesses directly.
+- 🗺️ **Map Navigation** — Open business locations in Google Maps.
+- 📝 **Add Your Business** — Submit business details through a frontend form.
+- ⭐ **Business Ratings** — View ratings where available in the listing data.
+- 🏛️ **Explore Nanded** — Discover popular tourist and heritage places.
+- 🌙 **Dark & Light Mode** — Switch between display themes.
+- 📱 **Responsive Design** — Optimized for desktop, tablet, and mobile screens.
+- 💾 **Browser Storage** — Save theme preferences and locally submitted listings in the browser.
+
+## 🛠️ Technologies Used
 
 - HTML5
 - CSS3
 - JavaScript
+- LocalStorage
+- Google Maps links
 
-## Project Structure
+## 📁 Project Structure
 
 ```text
 NandedSeva/
@@ -22,36 +36,59 @@ NandedSeva/
 └── README.md
 ```
 
-## Getting Started
+## 🚀 How to Run Locally
 
-1. Clone or download this repository.
-2. Open the project folder.
-3. Open `index.html` in your web browser.
+1. Download or clone this repository.
+2. Open the `NandedSeva` project folder.
+3. Open `index.html` in your browser.
+4. Explore the services, search businesses, and try the available filters.
 
-No build tools are required for the basic static website.
+No backend setup or package installation is required for the current frontend version.
 
-## Project Goals
+## 🏙️ About Nanded
 
-- Create an easy-to-use local services directory.
-- Improve access to local business information.
-- Build a responsive and user-friendly interface.
-- Continue improving the project with useful features.
+Nanded is a city in Maharashtra, India, known for its religious, historical, and cultural heritage.
 
-## Future Improvements
+Popular places include:
 
-- Service category filters
-- Area-wise search for Nanded
-- Business submission form
-- Business listing approval system
-- Customer reviews and ratings
-- Improved mobile experience
+- Takht Sri Hazur Sahib
+- Nanded Fort
+- Mahur Gadh
+- Kaleshwar Temple
+- Sahastrakund Waterfall
 
-## Developer
+Learn more from official sources:
+
+- [Maharashtra Tourism](https://maharashtratourism.gov.in/)
+- [Nanded District Official Website](https://nanded.gov.in/)
+- [Nanded Waghala City Municipal Corporation](https://nwcmc.gov.in/)
+
+## ⚠️ Important Notes
+
+- This project is currently a **frontend-only prototype**.
+- Business submissions are saved in the current browser and are not automatically published for other users.
+- There is no backend database, user authentication, or admin approval system yet.
+- Business details and ratings may change. Please verify information before contacting a business.
+- Listing information is provided for directory purposes and does not imply endorsement.
+
+## 🔮 Future Improvements
+
+- Backend and database integration
+- Admin dashboard and listing approval
+- User reviews and ratings
+- Verified business profiles
+- Improved business registration workflow
+- Advanced area-based search
+- SEO improvements and deployment
+
+## 👨‍💻 Developer
 
 **Pavan Ughade**
 
-GitHub: [@pavanughade04](https://github.com/pavanughade04)
+Full Stack Development Learner from India 🇮🇳
 
 ---
 
-This project is being developed as a web development project focused on local services and community convenience.
+⭐ If you find this project useful, consider giving the repository a star!
+
+**NandedSeva — Connecting Nanded with Local Services.**
